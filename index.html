@@ -540,8 +540,8 @@
 
     <div class="slideshow" id="slideshow">
       <div class="empty" id="slideshowEmpty">
-        Add your photos to the <code>images/</code> folder &mdash; they'll show up
-        here automatically once this site is hosted on GitHub Pages.
+        Add your photos to the <code>images/</code> folder and list their filenames
+        in the <code>galleryImages</code> array near the bottom of this page.
       </div>
       <button class="arrow prev" id="prevBtn" aria-label="Previous slide">&#8249;</button>
       <button class="arrow next" id="nextBtn" aria-label="Next slide">&#8250;</button>
@@ -576,18 +576,17 @@
 <script>
   // ===========================================================
   // GALLERY CONFIG
-  // This automatically loads every image inside the "images/" folder
-  // of your GitHub repo — no need to list filenames manually.
-  //
-  // Just fill in your GitHub username and repo name below.
-  // (Repo name is usually "abhishek-gupta420.github.io" or
-  //  whatever repo you're publishing this site from.)
+  // 1. Put your photos inside the "images/" folder (e.g. photo1.jpg, photo2.jpg).
+  // 2. List the filenames below, in the order you want them shown.
+  //    Add an optional caption after a pipe "|" if you'd like.
   // ===========================================================
-  const GH_USER = "abhishek-gupta420";
-  const GH_REPO = "whoami";          // <-- change to your repo name
-  const GH_BRANCH = "main";             // <-- change if your default branch is "master"
-  const IMAGES_FOLDER = "images";
-  const IMAGE_EXT = /\.(jpe?g|png|gif|webp|avif)$/i;
+  const galleryImages = [
+    "images/photo1.jpg",
+    "images/photo2.jpeg",
+    "images/photo3.jpeg",
+    "images/photo4.jpeg",
+    // "images/photo3.jpg|A caption for this photo",
+  ];
 
   const slideshow   = document.getElementById('slideshow');
   const slideEmpty  = document.getElementById('slideshowEmpty');
@@ -599,24 +598,26 @@
   let current = 0;
   let timer;
 
-  function buildGallery(images) {
-    if (images.length === 0) {
-      prevBtn.style.display = 'none';
-      nextBtn.style.display = 'none';
-      return;
-    }
-
+  if (galleryImages.length > 0) {
     slideEmpty.style.display = 'none';
 
-    images.forEach((src, i) => {
+    galleryImages.forEach((entry, i) => {
+      const [src, caption] = entry.split('|');
+
       // slide
       const slide = document.createElement('div');
       slide.className = 'slide' + (i === 0 ? ' active' : '');
       const img = document.createElement('img');
       img.src = src;
-      img.alt = `Gallery photo ${i + 1}`;
+      img.alt = caption || `Gallery photo ${i + 1}`;
       img.loading = 'lazy';
       slide.appendChild(img);
+      if (caption) {
+        const cap = document.createElement('div');
+        cap.className = 'cap';
+        cap.textContent = caption;
+        slide.appendChild(cap);
+      }
       slideshow.insertBefore(slide, prevBtn);
 
       // dot
@@ -631,7 +632,7 @@
       thumb.className = 'thumb';
       const timg = document.createElement('img');
       timg.src = src;
-      timg.alt = `Gallery photo ${i + 1}`;
+      timg.alt = caption || `Gallery photo ${i + 1}`;
       timg.loading = 'lazy';
       thumb.appendChild(timg);
       galleryGrid.appendChild(thumb);
@@ -664,27 +665,10 @@
       prevBtn.style.display = 'none';
       nextBtn.style.display = 'none';
     }
+  } else {
+    prevBtn.style.display = 'none';
+    nextBtn.style.display = 'none';
   }
-
-  // Try to auto-discover images via the GitHub API (works for public repos).
-  fetch(`https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${IMAGES_FOLDER}?ref=${GH_BRANCH}`)
-    .then(res => {
-      if (!res.ok) throw new Error('Could not list images folder');
-      return res.json();
-    })
-    .then(files => {
-      const images = files
-        .filter(f => f.type === 'file' && IMAGE_EXT.test(f.name))
-        .sort((a, b) => a.name.localeCompare(b.name))
-        .map(f => `${IMAGES_FOLDER}/${f.name}`);
-      buildGallery(images);
-    })
-    .catch(() => {
-      // Fallback: if the API call fails (e.g. offline, rate-limited,
-      // or GH_USER/GH_REPO not set correctly), show the empty state.
-      prevBtn.style.display = 'none';
-      nextBtn.style.display = 'none';
-    });
 </script>
 </body>
 </html>
